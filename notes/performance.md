@@ -109,5 +109,5 @@ Snapshot of iostat when get workload was running
     Device:         rrqm/s   wrqm/s   r/s   w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await  svctm  %util
     sdb               0.00     0.00 32315.00  0.00 21961.00     0.00     1.36     5.92    0.18   0.03 100.00
     --
-    
-The above iostat numbers demonstrate that when 8 instances of fatcache were subjected to load, there were 5-6 requests pending in the queue. Each request had an avarage service time of 30 usec, with the queue wait time of 150 usec 
+
+The above iostat numbers demonstrate that when 8 instances of fatcache were subjected to load, there were 5-6 requests pending in the queue. Each request had an average service time of 30 usec, with the queue wait time of 150 usec
