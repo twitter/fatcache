@@ -1,0 +1,236 @@
+- No literal tabs. Expand tabs to 4 spaces.
+- Indentation is 4 spaces.
+- No more than 3 levels of indentation.
+- Make sure that your editor does not leave space at the end of the line.
+- snake_case for variable, function and file names.
+- Use your own judgement when naming variables and be as Spartan as possible.
+  Eg: Using variable name like this_variable_is_a_temporary_counter will
+  usually be frowned upon.
+
+- Don't use int, char, short, long. Instead use int8_t uint8_t, int16_t,
+  uint16_t, int32_t, uint32_t, int64_t, uint64_t. You have to include
+  <stdint.h>
+- Use bool for Boolean. You have to include <stdbool.h>
+- Always use size_t type when dealing with sizes of objects or memory ranges.
+
+
+- 80 column line limit.
+- If you have to wrap a long statement (> 80 column), put the operator at the
+  end of the line and use 4 spaces to indent the next line. Eg:
+    while (cnt < 20 && this_variable_name_is_too_long &&
+        ep != NULL) {
+            z = a + really + long + statement + that + needs
+                two + lines + gets + indented + four + spaces
+                on + the + second + and + subsequent + lines;
+    }
+
+    and:
+
+    int a = function(param_a, param_b, param_c, param_d, param_e,
+                         param_f, param_g, param_h, param_i,
+                         param_j, param_k, param_l);
+
+- Always use braces for all conditional blocks (if, switch, for, while, do).
+  This holds good even for single statement conditional blocks. Eg:
+    if (cond) {
+        stmt;
+    }
+- Placement of braces for non-function statement blocks - put opening brace
+  last on the line and closing brace first. Eg:
+    if (x is true) {
+        we do y
+    }
+- Placement of brace for functions - put the opening brace at the beginning
+  of the next line and closing brace first. Eg:
+    int
+    function(int x)
+    {
+        body of the function
+    }
+- Closing brace is empty on a line of its own, except in the cases where it is
+  followed by a continuation of the same statement, i.e. a "while" in a
+  do-statement or an "else" in an if-statement, like this:
+    do {
+        body of do-loop
+    } while (condition);
+
+    and,
+
+    if (x == y) {
+        ..
+    } else if (x > y) {
+        ...
+    } else {
+        ....
+    }
+- column align switch keyword and the corresponding case/default keyword. Eg:
+    switch (alphabet) {
+    case 'a':
+    case 'b':
+        printf("I am a or b\n");
+        break;
+    default:
+        break;
+    }
+- Forever loops are done with for, and not while. Eg:
+    for (;;) {
+        stmt;
+    }
+
+- Don't use a space after a function name.
+- Use space after keywords. Exceptions are sizeof, typeof, alignof and
+  __attribute__, which look like functions.
+- Do not add spaces around (inside) parenthesized expressions.
+    s = sizeof( sizeof(*p)) ); /* Bad eg */
+    s = sizeof(sizeof(*p)); /* Good eg */
+- When declaring pointer data, use '*' adjacent to the data name and not
+  adjacent to the type name. Eg:
+    int
+    function(int *p)
+    {
+        char *p;
+        body of the function
+    }
+- Use one space around (on each side of) most binary and ternary operators,
+  such as any of these:
+    =  +  -  <  >  *  /  %  |  &  ^  <=  >=  ==  !=  ?  :
+  but no space after unary operators:
+    &  *  +  -  ~  !  sizeof  typeof  alignof  __attribute__  defined
+  no space before the postfix increment & decrement unary operators:
+    ++  --
+  and no space around the '.' and "->" structure member operators.
+
+- Casts should not be followed by space. Eg:
+  int q = *(int *)&p
+
+- Don't ever use typedef for structure types. Typedefs are problematic
+  because they do not properly hide their underlying type; for example you
+  need to know if the typedef is the structure itself or a pointer to the
+  structure.  In addition they must be declared exactly once, whereas an
+  incomplete structure type can be mentioned as many times as necessary.
+  Typedefs are difficult to use in stand-alone header files: the header
+  that defines the typedef must be included before the header that uses it,
+  or by the header that uses it (which causes namespace pollution), or
+  there must be a back-door mechanism for obtaining the typedef.
+- The only exception for using a typedef is when defining a type for a
+  function pointer.
+
+- Function local to a file should be static.
+- Function type should be on a line by itself preceding the function. Eg:
+    static char *
+    function(int a1, int a2, float fl, int a4)
+    {
+        ...
+- Seperate two successive functions with one blank line.
+- Include parameter names with their datypes in function declaration. Eg:
+    void function(int param);
+- When using wrapper function, it is preferred that you name the wrapped
+  function with the same name as wrapper function and prepend an '_' to
+  the wrapped function name. Wrapped functions are usually static. Eg:
+    static int
+    _fib(int n)
+    {
+        ...
+    }
+    int
+    fib(int n)
+    {
+        ...
+        _fib(n);
+        ...
+    }
+- Functions should be short and sweet, and do just one thing. They should
+  fit on one or two screenfuls of text (80x24 screen size), and do one
+  thing and do that well.
+  The maximum length of a function is inversely proportional to the
+  complexity and indentation level of that function.  So, if you have a
+  conceptually simple function that is just one long (but simple)
+  case-statement, where you have to do lots of small things for a lot of
+  different cases, it's OK to have a longer function.
+  Another measure of the function is the number of local variables. They
+  shouldn't exceed 5-10, or you're doing something wrong. Re-think the
+  function, and split it into smaller pieces. A human brain can
+  generally easily keep track of about 7 different things, anything more
+  and it gets confused. You know you're brilliant, but maybe you'd like
+  to understand what you did 2 weeks from now.
+
+- Never use goto statements.
+
+- Don't use // for single line comments. Instead use /* ... */ style
+- For multi-line comments use the following style
+    /*
+     * This is the preferred style for multi-line
+     * comments in the Linux kernel source code.
+     * Please use it consistently.
+     *
+     * Description:  A column of asterisks on the left side,
+     * with beginning and ending almost-blank lines.
+     */
+- To comment out block of code spanning several lines use "#ifdef 0 ... #endif"
+- All major functions should have comments describing what they do at the
+  head of the function. Avoid putting comments in the function body unless
+  absolutely needed. Eg:
+/*
+ * Try to acquire a physical address lock while a pmap is locked.  If we
+ * fail to trylock we unlock and lock the pmap directly and cache the
+ * locked pa in *locked.  The caller should then restart their loop in case
+ * the virtual to physical mapping has changed.
+ */
+int
+vm_page_pa_tryrelock(pmap_t pmap, vm_paddr_t pa, vm_paddr_t *locked)
+{
+    ...
+
+- Use just one data declaration per line (no commas for multiple data
+  declarations).  This leaves you room for a small comment on each
+  item, explaining its use.
+
+- Macro name is always in UPPERCASE.
+- Use enums when defining more than one related constants. All enumeration
+  values are in UPPERCASE.
+- Avoid macros as much as possible and use inline functions whereever you can.
+- For macros encapsulating compound statements, right justify the backslashes
+  and enclose it in do { ... } while (0)
+- For parameterized macros, all the parameters used in the macro body must
+  be surrounded by parentheses. Eg:
+  #define ADD_1(x) ((x) + 1)
+
+- sizeof a struct. Eg
+  char *p;
+  p = malloc(sizeof(*p))  /* Good example */
+  p = malloc(sizeof(char) /* Bad example */
+
+- When declaring variables in structures, each of the variables should
+  gets its own line.  Try to make the structure readable by aligning the
+  member names using either tabs or spaces depending upon your judgment.
+  You should use only one space or tab if it suffices to align at least 90%
+  of the member names. Names following extremely long types should be
+  separated by a single space.
+struct foo {
+    struct foo    *next;   /* List of active foo. */
+    struct mumble amumble; /* Comment for mumble. */
+    int           bar;     /* Try to align the comments. */
+    struct verylongtypename *baz; /* Won't fit in 2 tabs. */
+};
+struct foo *foohead;    /* Head of global foo list. *
+- Major structures should be declared at the top of the file in which they
+  are used, or in separate header files if they are used in multiple source
+  files.  Use of the structures should be by separate declarations and
+  should be extern if they are declared in a header file.
+
+- Use NULL as the null pointer constant (instead of 0)
+- Test pointers against NULL, e.g., use:
+    (p = f()) == NULL
+
+    not:
+
+    !(p = f())
+
+- Do not use ! for tests unless it is a boolean, e.g. use:
+    if (*p == '\0')
+
+    not:
+
+    if (!*p)
+- Always use const for function parameters if the pointer has no side effect.
+
