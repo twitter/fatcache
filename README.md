@@ -1,4 +1,4 @@
-# fatcache [![Build Status](https://secure.travis-ci.org/twitter/fatcache.png)](http://travis-ci.org/twitter/fatcache)
+# fatcache [![Build Status](https://travis-ci.org/twitter/fatcache.png?branch=master)](https://travis-ci.org/twitter/fatcache)
 
 **fatcache** is memcache on SSD. Think of fatcache as a cache for your big data.
 
