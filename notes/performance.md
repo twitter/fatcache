@@ -78,9 +78,10 @@
 - The read throughput is bounded by the read throughput supported by the SSD.
 - In aggregate all the 8 instances do 32K get/sec for 100 byte item size.
 - We can scale read throughput by scaling number of SSD and fatcaches running on a given machine
-- Snapshot of iostat when get workload was running:
 
-    [manj@atla-atq-22-sr4 ~]$ iostat -d 2 -x -k sdb | grep --color 'Device.*' -A 1
+Snapshot of iostat when get workload was running
+
+    $ iostat -d 2 -x -k sdb | grep --color 'Device.*' -A 1
 
     Device:         rrqm/s   wrqm/s   r/s   w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await  svctm  %util
     sdb               0.00     0.00 31790.00  0.00 21614.25     0.00     1.36     5.83    0.18   0.03 100.05
