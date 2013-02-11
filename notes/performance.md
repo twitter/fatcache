@@ -58,7 +58,7 @@
 - All writes are buffered in memory and flushed to disk in slab size granularity, which is 1 MB here.
 - The buffering of write allows us to achieve higher write iops compared to read iops when item sizes are fairly small (< 500 byes).
 
-## Get
+### Get
 
     $ ./mcperf --sizes=u100,100 --num-calls=10000  --num-conns=100 --call-rate=40 --conn-rate=10000 --method=get --server=<server> --port=11211
 
@@ -110,4 +110,4 @@ Snapshot of iostat when get workload was running
     sdb               0.00     0.00 32315.00  0.00 21961.00     0.00     1.36     5.92    0.18   0.03 100.00
     --
     
-The above iostat numbers show that when 8 instances of fatcache was subjected to load, on an avarage there were 5-6 requests pending in the queue. Each request had an avarage service time of 30 usec, with the queue wait time of 150 usec 
+The above iostat numbers demonstrate that when 8 instances of fatcache were subjected to load, there were 5-6 requests pending in the queue. Each request had an avarage service time of 30 usec, with the queue wait time of 150 usec 
