@@ -17,9 +17,20 @@
 
 ## Details
 
+### fatcache (8 instances)
+
+    $ sudo src/fatcache -D /dev/sdb -p 11211 -s 0/8
+    $ sudo src/fatcache -D /dev/sdb -p 11212 -s 1/8
+    $ sudo src/fatcache -D /dev/sdb -p 11213 -s 2/8
+    $ sudo src/fatcache -D /dev/sdb -p 11214 -s 3/8
+    $ sudo src/fatcache -D /dev/sdb -p 11215 -s 4/8
+    $ sudo src/fatcache -D /dev/sdb -p 11216 -s 5/8
+    $ sudo src/fatcache -D /dev/sdb -p 11217 -s 6/8
+    $ sudo src/fatcache -D /dev/sdb -p 11218 -s 7/8
+
 ### Set
 
-    $ ./mcperf --sizes=u100,100 --num-calls=10000  --num-conns=100 --call-rate=1000 --conn-rate=10000 --method=set --server=<server> --port=11212
+    $ ./mcperf --sizes=u100,100 --num-calls=10000  --num-conns=100 --call-rate=1000 --conn-rate=10000 --method=set --server=<server> --port=11211
     Total: connections 100 requests 1000000 responses 1000000 test-duration 10.692 s
 
     Connection rate: 9.4 conn/s (106.9 ms/conn <= 100 concurrent connections)
