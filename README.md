@@ -40,13 +40,15 @@ An in-memory index is preferable to an on-disk index to minimize disk lookups to
 
 Maintaining an in-memory index of all on-disk data requires a compact representation of the index. The fatcache index has the following format:
 
-    struct itemx {
-      STAILQ_ENTRY(itemx) tqe;    /* link in index / free q */
-      uint8_t             md[20]; /* sha1 message digest */
-      uint32_t            sid;    /* owner slab id */
-      uint32_t            offset; /* item offset from owner slab base */
-      uint64_t            cas;    /* cas */
-    } __attribute__ ((__packed__));
+```c
+struct itemx {
+  STAILQ_ENTRY(itemx) tqe;    /* link in index / free q */
+  uint8_t             md[20]; /* sha1 message digest */
+  uint32_t            sid;    /* owner slab id */
+  uint32_t            offset; /* item offset from owner slab base */
+  uint64_t            cas;    /* cas */
+} __attribute__ ((__packed__));
+```
 
 Each index entry contains both object-specific information (key name, &c.) and disk-related information (disk address, &c.). The entries are stored in a chained hash table. To avoid long hash bin traversals, the number of hash bins is fixed to the expected number of index entries.
 
