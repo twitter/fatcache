@@ -110,7 +110,7 @@ fc_show_usage(void)
         "           [-p port] [-a addr] [-e hash power]" CRLF
         "           [-f factor] [-n min item chunk size] [-I slab size]" CRLF
         "           [-i max index memory[ [-m max slab memory]" CRLF
-        "           [-z slab profile] [-i ssd device] [-s server id]" CRLF
+        "           [-z slab profile] [-D ssd device] [-s server id]" CRLF
         " ");
 
     log_stderr(

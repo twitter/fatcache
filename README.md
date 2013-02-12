@@ -87,7 +87,7 @@ To build fatcache from source with _debug logs enabled_ and _assertions disabled
                [-p port] [-a addr] [-e hash power]
                [-f factor] [-n min item chunk size] [-I slab size]
                [-i max index memory[ [-m max slab memory]
-               [-z slab profile] [-i ssd device] [-s server id]
+               [-z slab profile] [-D ssd device] [-s server id]
 
     Options:
       -h, --help                  : this help
