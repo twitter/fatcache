@@ -394,7 +394,7 @@ fc_get_options(int argc, char **argv)
                 return FC_ERROR;
             }
 
-            settings.slab_size = (size_t)value * MB;
+            settings.slab_size = (size_t)value;
 
             if (settings.slab_size < SLAB_MIN_SIZE) {
                 log_stderr("fatcache: slab size must be at least %zu bytes",
