@@ -285,6 +285,7 @@ fc_get_options(int argc, char **argv)
 {
     int c, value;
     char *pos;
+    char unit;
 
     opterr = 0;
 
@@ -388,7 +389,21 @@ fc_get_options(int argc, char **argv)
             break;
 
         case 'I':
-            value = fc_atoi(optarg, strlen(optarg));
+            unit = optarg[strlen(optarg) - 1];
+
+            if (unit == 'k' || unit == 'K' || unit == 'm' || unit == 'M') {
+                value = fc_atoi(optarg, strlen(optarg) - 1);
+
+                if (unit == 'k' || unit == 'K') {
+                    value *= KB;
+                } else if (unit == 'm' || unit == 'M') {
+                    value *= MB;
+                }
+
+            } else {
+                value = fc_atoi(optarg, strlen(optarg));
+            }
+
             if (value <= 0) {
                 log_stderr("fatcache: option -I requires a non zero number");
                 return FC_ERROR;
