@@ -12,8 +12,8 @@ LDFLAGS += -rdynamic
 fatcache_SOURCES =			\
 	fc_core.c fc_core.h		\
 	fc_connection.c fc_connection.h	\
-	fc_server.c			\
-	fc_client.c			\
+	fc_server.c fc_server.h		\
+	fc_client.c fc_client.h		\
 	fc_slab.c fc_slab.h		\
 	fc_item.c fc_item.h		\
 	fc_itemx.c fc_itemx.h		\

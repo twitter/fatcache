@@ -119,6 +119,11 @@ rsp_send_status(struct context *ctx, struct conn *conn, struct msg *msg,
     ASSERT(rsp_type != MSG_RSP_CLIENT_ERROR);
     ASSERT(rsp_type != MSG_RSP_SERVER_ERROR);
 
+    if (msg->noreply) {
+        req_put(msg);
+        return;
+    }
+
     pmsg = rsp_get(conn);
     if (pmsg == NULL) {
         req_process_error(ctx, conn, msg, ENOMEM);
