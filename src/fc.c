@@ -730,7 +730,7 @@ main(int argc, char **argv)
         exit(1);
     }
 
-    status = core_init();
+    status = core_init(&ctx);
     if (status != FC_OK) {
         exit(1);
     }

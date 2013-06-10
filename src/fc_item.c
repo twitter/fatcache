@@ -72,20 +72,25 @@ item_slabcid(uint8_t nkey, uint32_t ndata)
     return cid;
 }
 
-struct item *
-item_get(uint8_t *key, uint8_t nkey, uint8_t cid, uint32_t ndata,
+rstatus_t
+item_get(struct aio_op *op, struct item **item, uint8_t *key, uint8_t nkey, uint8_t cid, uint32_t ndata,
          rel_time_t expiry, uint32_t flags, uint8_t *md, uint32_t hash)
 {
+    rstatus_t status;
     struct item *it;
 
     ASSERT(slab_valid_id(cid));
 
-    it = slab_get_item(cid);
-    if (it == NULL) {
+    status = slab_get_item(op, cid, item);
+    if (status != FC_OK) {
+        if (status == FC_EAGAIN)
+            return FC_EAGAIN;
+
         log_warn("server error on allocating item in slab %"PRIu8, cid);
-        return NULL;
+        return status;
     }
 
+    it = *item;
     it->magic = ITEM_MAGIC;
     /* offset and sid are initialized by slab_get_item */
     it->cid = cid;
@@ -104,7 +109,7 @@ item_get(uint8_t *key, uint8_t nkey, uint8_t cid, uint32_t ndata,
 
     itemx_putx(it->hash, it->md, it->sid, it->offset, ++cas_id);
 
-    return it;
+    return FC_OK;
 }
 
 void

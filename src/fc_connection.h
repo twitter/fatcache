@@ -43,6 +43,10 @@ struct conn {
     size_t             recv_bytes;     /* received (read) bytes */
     size_t             send_bytes;     /* sent (written) bytes */
 
+    struct aio_op      op;             /* asynchronous disk i/o operation */
+    struct msg         *nmsg;          /* next message, held while an i/o operation is processing */
+    struct context     *ctx;           /* context, held while an i/o operation is processing */
+
     uint32_t           events;         /* connection io events */
     err_t              err;            /* connection errno */
     unsigned           recv_active:1;  /* recv active? */

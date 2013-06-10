@@ -139,6 +139,7 @@ void req_enqueue_omsgq(struct context *ctx, struct conn *conn, struct msg *msg);
 void req_dequeue_omsgq(struct context *ctx, struct conn *conn, struct msg *msg);
 void rsp_send_done(struct context *ctx, struct conn *conn, struct msg *msg);
 void req_recv_done(struct context *ctx, struct conn *conn, struct msg *msg, struct msg *nmsg);
+void req_cont(struct aio_op *op, struct aio_op *completed, struct conn *conn);
 
 void req_process_error(struct context *ctx, struct conn *conn, struct msg *msg, int err);
 

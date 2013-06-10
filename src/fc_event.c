@@ -28,7 +28,7 @@ event_init(struct context *ctx, int size)
     struct epoll_event *event;
 
     ASSERT(ctx->ep < 0);
-    ASSERT(ctx->nevent != 0);
+    ASSERT(ctx->nevent == -1);
     ASSERT(ctx->event == NULL);
 
     ep = epoll_create(size);
@@ -37,6 +37,7 @@ event_init(struct context *ctx, int size)
         return -1;
     }
 
+    ctx->nevent = size;
     event = fc_calloc(ctx->nevent, sizeof(*ctx->event));
     if (event == NULL) {
         status = close(ep);
@@ -170,6 +171,27 @@ event_del_conn(int ep, struct conn *c)
     } else {
         c->recv_active = 0;
         c->send_active = 0;
+    }
+
+    return status;
+}
+
+int
+event_add_fd(int ep, int fd)
+{
+    int status;
+    struct epoll_event event;
+
+    ASSERT(ep > 0);
+    ASSERT(fd > 0);
+
+    event.events = (uint32_t)EPOLLIN;
+    event.data.ptr = NULL;
+
+    status = epoll_ctl(ep, EPOLL_CTL_ADD, fd, &event);
+    if (status < 0) {
+        log_error("epoll ctl on e %d eventfd %d failed: %s", ep, fd,
+            strerror(errno));
     }
 
     return status;

@@ -10,6 +10,7 @@ AM_CFLAGS += -Wunused-function -Wunused-value -Wunused-variable
 LDFLAGS += -rdynamic
 
 fatcache_SOURCES =			\
+	fc_aio.c fc_aio.h		\
 	fc_core.c fc_core.h		\
 	fc_connection.c fc_connection.h	\
 	fc_server.c			\

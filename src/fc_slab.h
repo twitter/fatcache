@@ -39,6 +39,7 @@ struct slabinfo {
     uint32_t              nalloc; /* # item alloced (monotonic) */
     uint32_t              nfree;  /* # item freed (monotonic) */
     uint8_t               cid;    /* class id */
+    struct aio_op         *op;    /* op holding this slab, if any */
     unsigned              mem:1;  /* memory? */
 };
 
@@ -49,6 +50,8 @@ struct slabclass {
     size_t           size;            /* item size (const) */
     size_t           slack;           /* unusable slack space (const) */
     struct slabhinfo partial_msinfoq; /* partial slabinfo q */
+    struct aio_op    *evict_op;       /* the operation evicting a slab of this class, if any */
+    struct aio_op    *drain_op;       /* the operation draining a slab of this class, if any */
 };
 
 #define SLABCLASS_MIN_ID        0
@@ -61,9 +64,9 @@ size_t slab_data_size(void);
 void slab_print(void);
 uint8_t slab_cid(size_t size);
 
-struct item *slab_get_item(uint8_t cid);
+rstatus_t slab_get_item(struct aio_op *op, uint8_t cid, struct item **item);
 void slab_put_item(struct item *it);
-struct item *slab_read_item(uint32_t sid, uint32_t addr);
+rstatus_t slab_read_item(struct aio_op *op, struct item **item, uint32_t sid, uint32_t addr);
 
 rstatus_t slab_init(void);
 void slab_deinit(void);

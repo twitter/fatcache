@@ -151,6 +151,7 @@ static void
 conn_free(struct conn *conn)
 {
     log_debug(LOG_VVERB, "free conn %p", conn);
+    aio_op_free(&conn->op);
     fc_free(conn);
 }
 
@@ -160,6 +161,8 @@ conn_put(struct conn *conn)
     ASSERT(conn->sd < 0);
 
     log_debug(LOG_VVERB, "put conn %p", conn);
+
+    aio_cancel(&conn->op);
 
     nfree_connq++;
     TAILQ_INSERT_HEAD(&free_connq, conn, tqe);
@@ -177,8 +180,16 @@ _conn_get(void)
         nfree_connq--;
         TAILQ_REMOVE(&free_connq, conn, tqe);
     } else {
+        rstatus_t status;
+
         conn = fc_alloc(sizeof(*conn));
         if (conn == NULL) {
+            return NULL;
+        }
+
+        status = aio_op_init(&conn->op);
+        if (status != FC_OK) {
+            fc_free(conn);
             return NULL;
         }
     }
@@ -196,6 +207,10 @@ _conn_get(void)
 
     conn->send_bytes = 0;
     conn->recv_bytes = 0;
+
+    aio_op_set_callback(&conn->op, (aio_operation_callback) req_cont, conn);
+    conn->nmsg = NULL;
+    conn->ctx = NULL;
 
     conn->events = 0;
     conn->err = 0;

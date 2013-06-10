@@ -100,6 +100,9 @@ AS_IF([test "x$ac_cv_epoll_works" = "xyes"], [], [AC_MSG_FAILURE([Linux epoll(7)
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
   [AC_MSG_ERROR([need posix thread library to be installed])])
 
+AC_SEARCH_LIBS([io_queue_init], [aio], [],
+  [AC_MSG_ERROR([need aio library to be installed])])
+
 # Check if we're a little-endian or a big-endian system
 AC_C_BIGENDIAN(
   [AC_DEFINE(HAVE_BIG_ENDIAN, 1, [Define to 1 if machine is big endian])],

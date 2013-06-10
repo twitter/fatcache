@@ -56,6 +56,7 @@
 typedef int rstatus_t; /* return type */
 typedef int err_t;     /* error type */
 
+struct aio_op;
 struct array;
 struct context;
 struct epoll_event;
@@ -106,6 +107,7 @@ struct slabclass;
 #include <fc_util.h>
 #include <fc_event.h>
 
+#include <fc_aio.h>
 #include <fc_connection.h>
 #include <fc_slab.h>
 #include <fc_itemx.h>
@@ -147,7 +149,7 @@ struct settings {
     uint32_t server_n;                     /* # server */
 };
 
-rstatus_t core_init(void);
+rstatus_t core_init(struct context *ctx);
 void core_deinit(void);
 
 rstatus_t core_start(struct context *ctx);

@@ -92,7 +92,7 @@ bool item_expired(struct item *it);
 struct slab *item_to_slab(struct item *it);
 uint8_t item_slabcid(uint8_t nkey, uint32_t ndata);
 
-struct item *item_get(uint8_t *key, uint8_t nkey, uint8_t cid, uint32_t ndata, rel_time_t expiry, uint32_t dataflags,  uint8_t *md, uint32_t hash);
+rstatus_t item_get(struct aio_op *op, struct item **item, uint8_t *key, uint8_t nkey, uint8_t cid, uint32_t ndata, rel_time_t expiry, uint32_t dataflags,  uint8_t *md, uint32_t hash);
 void item_put(struct item *it);
 
 void item_init(void);

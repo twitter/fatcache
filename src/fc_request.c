@@ -141,10 +141,10 @@ req_recv_next(struct context *ctx, struct conn *conn, bool alloc)
 }
 
 static bool
-req_filter(struct context *ctx, struct conn *conn, struct msg *msg)
+req_filter(struct context *ctx, struct conn *conn, struct msg *msg, struct msg *nmsg)
 {
     if (msg_empty(msg)) {
-        ASSERT(conn->rmsg == NULL);
+        ASSERT(nmsg == NULL);
         log_debug(LOG_VERB, "filter empty req %"PRIu64" from c %d", msg->id,
                   conn->sd);
         req_put(msg);
@@ -156,7 +156,7 @@ req_filter(struct context *ctx, struct conn *conn, struct msg *msg)
      * passive close
      */
     if (msg->quit) {
-        ASSERT(conn->rmsg == NULL);
+        ASSERT(nmsg == NULL);
         log_debug(LOG_INFO, "filter quit req %"PRIu64" from c %d", msg->id,
                   conn->sd);
         conn->eof = 1;
@@ -168,11 +168,12 @@ req_filter(struct context *ctx, struct conn *conn, struct msg *msg)
     return false;
 }
 
-static void
+static rstatus_t
 req_process_get(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     struct itemx *itx;
     struct item *it;
+    rstatus_t status;
 
     itx = itemx_getx(msg->hash, msg->md);
     if (itx == NULL) {
@@ -189,27 +190,31 @@ req_process_get(struct context *ctx, struct conn *conn, struct msg *msg)
         }
 
         rsp_send_status(ctx, conn, msg, type);
-        return;
+        return FC_OK;
     }
 
     /*
      * On a hit, we read the item with address [sid, offset] and respond
      * with item value if the item hasn't expired yet.
      */
-    it = slab_read_item(itx->sid, itx->offset);
-    if (it == NULL) {
+    status = slab_read_item(&conn->op, &it, itx->sid, itx->offset);
+    if (status != FC_OK) {
+        if (status == FC_EAGAIN)
+            return FC_EAGAIN;
+
         rsp_send_error(ctx, conn, msg, MSG_RSP_SERVER_ERROR, errno);
-        return;
+        return status;
     }
     if (item_expired(it)) {
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_FOUND);
-        return;
+        return FC_OK;
     }
 
     rsp_send_value(ctx, conn, msg, it, itx->cas);
+    return FC_OK;
 }
 
-static void
+static rstatus_t
 req_process_delete(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     bool found;
@@ -217,16 +222,18 @@ req_process_delete(struct context *ctx, struct conn *conn, struct msg *msg)
     found = itemx_removex(msg->hash, msg->md);
     if (!found) {
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_FOUND);
-        return;
+        return FC_OK;
     }
 
     rsp_send_status(ctx, conn, msg, MSG_RSP_DELETED);
+    return FC_OK;
 }
 
-static void
+static rstatus_t
 req_process_set(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     uint8_t *key, nkey, cid;
+    rstatus_t status;
     struct item *it;
 
     key = msg->key_start;
@@ -235,24 +242,28 @@ req_process_set(struct context *ctx, struct conn *conn, struct msg *msg)
     cid = item_slabcid(nkey, msg->vlen);
     if (cid == SLABCLASS_INVALID_ID) {
         rsp_send_error(ctx, conn, msg, MSG_RSP_CLIENT_ERROR, EINVAL);
-        return;
+        return FC_ERROR;
     }
 
     itemx_removex(msg->hash, msg->md);
 
-    it = item_get(key, nkey, cid, msg->vlen, time_reltime(msg->expiry),
+    status = item_get(&conn->op, &it, key, nkey, cid, msg->vlen, time_reltime(msg->expiry),
                   msg->flags, msg->md, msg->hash);
-    if (it == NULL) {
+    if (status != FC_OK) {
+        if (status == FC_EAGAIN)
+            return FC_EAGAIN;
+
         rsp_send_error(ctx, conn, msg, MSG_RSP_SERVER_ERROR, ENOMEM);
-        return;
+        return FC_ERROR;
     }
 
     mbuf_copy_to(&msg->mhdr, msg->value, item_data(it), msg->vlen);
 
     rsp_send_status(ctx, conn, msg, MSG_RSP_STORED);
+    return FC_OK;
 }
 
-static void
+static rstatus_t
 req_process_add(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     struct itemx *itx;
@@ -261,13 +272,13 @@ req_process_add(struct context *ctx, struct conn *conn, struct msg *msg)
     itx = itemx_getx(msg->hash, msg->md);
     if (itx != NULL) {
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
-        return;
+        return FC_OK;
     }
 
-    req_process_set(ctx, conn, msg);
+    return req_process_set(ctx, conn, msg);
 }
 
-static void
+static rstatus_t
 req_process_replace(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     struct itemx *itx;
@@ -276,13 +287,13 @@ req_process_replace(struct context *ctx, struct conn *conn, struct msg *msg)
     itx = itemx_getx(msg->hash, msg->md);
     if (itx == NULL) {
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
-        return;
+        return FC_OK;
     }
 
-    req_process_set(ctx, conn, msg);
+    return req_process_set(ctx, conn, msg);
 }
 
-static void
+static rstatus_t
 req_process_cas(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     struct itemx *itx;
@@ -294,7 +305,7 @@ req_process_cas(struct context *ctx, struct conn *conn, struct msg *msg)
          * with a cas does not exist.
          */
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_FOUND);
-        return;
+        return FC_OK;
     }
 
     if (itx->cas != msg->cas) {
@@ -303,16 +314,17 @@ req_process_cas(struct context *ctx, struct conn *conn, struct msg *msg)
          * a cas has been modified since you last fetched it.
          */
         rsp_send_status(ctx, conn, msg, MSG_RSP_EXISTS);
-        return;
+        return FC_OK;
     }
 
-    req_process_set(ctx, conn, msg);
+    return req_process_set(ctx, conn, msg);
 }
 
-static void
+static rstatus_t
 req_process_concat(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     uint8_t *key, nkey, cid;
+    rstatus_t status;
     struct item *oit, *it;
     uint32_t ndata;
     struct itemx *itx;
@@ -325,36 +337,42 @@ req_process_concat(struct context *ctx, struct conn *conn, struct msg *msg)
     if (itx == NULL) {
         /* 2a). miss -> return NOT_STORED */
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
-        return;
+        return FC_OK;
     }
 
     /* 2b). hit -> read existing item into oit */
-    oit = slab_read_item(itx->sid, itx->offset);
-    if (oit == NULL) {
+    status = slab_read_item(&conn->op, &oit, itx->sid, itx->offset);
+    if (status != FC_OK) {
+        if (status == FC_EAGAIN)
+            return FC_EAGAIN;
+
         rsp_send_error(ctx, conn, msg, MSG_RSP_SERVER_ERROR, errno);
-        return;
+        return status;
     }
     if (item_expired(oit)) {
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
-        return;
+        return FC_OK;
     }
 
     ndata = msg->vlen + oit->ndata;
     cid = item_slabcid(nkey, ndata);
     if (cid == SLABCLASS_INVALID_ID) {
         rsp_send_error(ctx, conn, msg, MSG_RSP_CLIENT_ERROR, EINVAL);
-        return;
+        return FC_ERROR;
     }
 
     /* 3). remove existing itemx of oit */
     itemx_removex(msg->hash, msg->md);
 
     /* 4). alloc new item that can hold ndata worth of bytes */
-    it = item_get(key, nkey, cid, ndata, time_reltime(msg->expiry),
+    status = item_get(&conn->op, &it, key, nkey, cid, ndata, time_reltime(msg->expiry),
                   msg->flags, msg->md, msg->hash);
-    if (it == NULL) {
+    if (status != FC_OK) {
+        if (status == FC_EAGAIN)
+            return FC_EAGAIN;
+
         rsp_send_error(ctx, conn, msg, MSG_RSP_SERVER_ERROR, ENOMEM);
-        return;
+        return FC_ERROR;
     }
 
     /* 5). copy data from msg to head or tail of new item it */
@@ -375,9 +393,10 @@ req_process_concat(struct context *ctx, struct conn *conn, struct msg *msg)
     }
 
     rsp_send_status(ctx, conn, msg, MSG_RSP_STORED);
+    return FC_OK;
 }
 
-static void
+static rstatus_t
 req_process_num(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     rstatus_t status;
@@ -396,25 +415,28 @@ req_process_num(struct context *ctx, struct conn *conn, struct msg *msg)
     if (itx == NULL) {
         /* 2a). miss -> return NOT_FOUND */
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_FOUND);
-        return;
+        return FC_OK;
     }
 
     /* 2b). hit -> read existing item into it */
-    it = slab_read_item(itx->sid, itx->offset);
-    if (it == NULL) {
+    status = slab_read_item(&conn->op, &it, itx->sid, itx->offset);
+    if (status != FC_OK) {
+        if (status == FC_EAGAIN)
+            return FC_EAGAIN;
+
         rsp_send_error(ctx, conn, msg, MSG_RSP_SERVER_ERROR, errno);
-        return;
+        return status;
     }
     if (item_expired(it)) {
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_FOUND);
-        return;
+        return FC_OK;
     }
 
     /* 3). sanity check item data to be a number */
     status = fc_atou64(item_data(it), it->ndata, &cnum);
     if (status != FC_OK) {
         rsp_send_error(ctx, conn, msg, MSG_RSP_CLIENT_ERROR, EINVAL);
-        return;
+        return FC_ERROR;
     }
 
     /* 4). remove existing itemx of it */
@@ -436,17 +458,21 @@ req_process_num(struct context *ctx, struct conn *conn, struct msg *msg)
     cid = item_slabcid(nkey, n);
     ASSERT(cid != SLABCLASS_INVALID_ID);
 
-    it = item_get(key, nkey, cid, n, time_reltime(msg->expiry), msg->flags,
+    status = item_get(&conn->op, &it, key, nkey, cid, n, time_reltime(msg->expiry), msg->flags,
                    msg->md, msg->hash);
-    if (it == NULL) {
+    if (status != FC_OK) {
+        if (status == FC_EAGAIN)
+            return FC_EAGAIN;
+
         rsp_send_error(ctx, conn, msg, MSG_RSP_SERVER_ERROR, ENOMEM);
-        return;
+        return FC_ERROR;
     }
 
     /* 7). copy numstr to it */
     fc_memcpy(item_data(it), numstr, n);
 
     rsp_send_num(ctx, conn, msg, it);
+    return FC_OK;
 }
 
 void
@@ -478,7 +504,7 @@ req_process_error(struct context *ctx, struct conn *conn, struct msg *msg,
     }
 }
 
-static void
+static rstatus_t
 req_process(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     uint8_t *key;
@@ -508,59 +534,71 @@ req_process(struct context *ctx, struct conn *conn, struct msg *msg)
     switch (msg->type) {
     case MSG_REQ_GET:
     case MSG_REQ_GETS:
-        req_process_get(ctx, conn, msg);
-        break;
+        return req_process_get(ctx, conn, msg);
 
     case MSG_REQ_DELETE:
-        req_process_delete(ctx, conn, msg);
-        break;
+        return req_process_delete(ctx, conn, msg);
 
     case MSG_REQ_CAS:
-        req_process_cas(ctx, conn, msg);
-        break;
+        return req_process_cas(ctx, conn, msg);
 
     case MSG_REQ_SET:
-        req_process_set(ctx, conn, msg);
-        break;
+        return req_process_set(ctx, conn, msg);
 
     case MSG_REQ_ADD:
-        req_process_add(ctx, conn, msg);
-        break;
+        return req_process_add(ctx, conn, msg);
 
     case MSG_REQ_REPLACE:
-        req_process_replace(ctx, conn, msg);
-        break;
+        return req_process_replace(ctx, conn, msg);
 
     case MSG_REQ_APPEND:
     case MSG_REQ_PREPEND:
-        req_process_concat(ctx, conn, msg);
-        break;
+        return req_process_concat(ctx, conn, msg);
 
     case MSG_REQ_INCR:
     case MSG_REQ_DECR:
-        req_process_num(ctx, conn, msg);
-        break;
+        return req_process_num(ctx, conn, msg);
 
     default:
         NOT_REACHED();
     }
+
+    return FC_ERROR;
 }
+
 
 void
 req_recv_done(struct context *ctx, struct conn *conn, struct msg *msg,
               struct msg *nmsg)
 {
+    rstatus_t status;
+
     ASSERT(msg->request);
     ASSERT(msg->owner == conn);
     ASSERT(conn->rmsg == msg);
     ASSERT(nmsg == NULL || nmsg->request);
 
-    /* enqueue next message (request), if any */
-    conn->rmsg = nmsg;
-
-    if (req_filter(ctx, conn, msg)) {
+    if (req_filter(ctx, conn, msg, nmsg)) {
+        /* enqueue next message (request), if any */
+        conn->rmsg = nmsg;
         return;
     }
 
-    req_process(ctx, conn, msg);
+    status = req_process(ctx, conn, msg);
+    if (status != FC_EAGAIN) {
+       conn->rmsg = nmsg;
+    }
+    else {
+        conn->nmsg = nmsg;
+        conn->ctx = ctx;
+        if (!msg->noreply) {
+            req_dequeue_omsgq(ctx, conn, msg);
+        }
+    }
+}
+
+void
+req_cont(struct aio_op *op, struct aio_op *completed, struct conn *conn)
+{
+    req_recv_done(conn->ctx, conn, conn->rmsg, conn->nmsg);
 }

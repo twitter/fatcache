@@ -24,11 +24,23 @@
 extern struct settings settings;
 
 rstatus_t
-core_init(void)
+core_init(struct context *ctx)
 {
     rstatus_t status;
 
+    ctx->ep = -1;
+    ctx->nevent = -1;
+    ctx->event = NULL;
+    ctx->max_timeout = -1;
+    ctx->timeout = ctx->max_timeout;
+    ctx->event = NULL;
+
     status = log_init(settings.verbose, settings.log_filename);
+    if (status != FC_OK) {
+        return status;
+    }
+
+    status = event_init(ctx, 1024);
     if (status != FC_OK) {
         return status;
     }
@@ -57,6 +69,11 @@ core_init(void)
     item_init();
 
     status = slab_init();
+    if (status != FC_OK) {
+        return status;
+    }
+
+    status = aio_init(ctx);
     if (status != FC_OK) {
         return status;
     }
@@ -173,20 +190,7 @@ core_core(struct context *ctx, struct conn *conn, uint32_t events)
 rstatus_t
 core_start(struct context *ctx)
 {
-    rstatus_t status;
-
-    ctx->ep = -1;
-    ctx->nevent = 1024;
-    ctx->max_timeout = -1;
-    ctx->timeout = ctx->max_timeout;
-    ctx->event = NULL;
-
-    status = event_init(ctx, 1024);
-    if (status != FC_OK) {
-        return status;
-    }
-
-    status = server_listen(ctx);
+    rstatus_t status = server_listen(ctx);
     if (status != FC_OK) {
         return status;
     }
@@ -212,7 +216,11 @@ core_loop(struct context *ctx)
     for (i = 0; i < nsd; i++) {
         struct epoll_event *ev = &ctx->event[i];
 
-        core_core(ctx, ev->data.ptr, ev->events);
+        /* special case for aio engine, ptr is NULL */
+        if (ev->data.ptr == NULL)
+            aio_process();
+        else
+            core_core(ctx, ev->data.ptr, ev->events);
     }
 
     return FC_OK;
