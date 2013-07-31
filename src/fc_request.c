@@ -283,6 +283,12 @@ req_process_replace(struct context *ctx, struct conn *conn, struct msg *msg)
 }
 
 static void
+req_process_version(struct context *ctx, struct conn *conn, struct msg *msg)
+{
+    rsp_send_status(ctx, conn, msg, MSG_RSP_VERSION);
+}
+
+static void
 req_process_cas(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     struct itemx *itx;
@@ -529,6 +535,10 @@ req_process(struct context *ctx, struct conn *conn, struct msg *msg)
 
     case MSG_REQ_REPLACE:
         req_process_replace(ctx, conn, msg);
+        break;
+
+    case MSG_REQ_VERSION:
+        req_process_version(ctx, conn, msg);
         break;
 
     case MSG_REQ_APPEND:

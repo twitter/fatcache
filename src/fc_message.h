@@ -22,32 +22,34 @@
 
 typedef void (*msg_parse_t)(struct msg *);
 
-#define MSG_CODEC(ACTION)                             \
-    ACTION( UNKNOWN,            ""/* unknown */     ) \
-    ACTION( REQ_GET,            "get  "             ) \
-    ACTION( REQ_GETS,           "gets "             ) \
-    ACTION( REQ_DELETE,         "delete "           ) \
-    ACTION( REQ_CAS,            "cas "              ) \
-    ACTION( REQ_SET,            "set "              ) \
-    ACTION( REQ_ADD,            "add "              ) \
-    ACTION( REQ_REPLACE,        "replace "          ) \
-    ACTION( REQ_APPEND,         "append  "          ) \
-    ACTION( REQ_PREPEND,        "prepend "          ) \
-    ACTION( REQ_INCR,           "incr "             ) \
-    ACTION( REQ_DECR,           "decr "             ) \
-    ACTION( REQ_QUIT,           "quit "             ) \
-    ACTION( RSP_NUM,            "" /* na */         ) \
-    ACTION( RSP_VALUE,          "VALUE "            ) \
-    ACTION( RSP_END,            "END\r\n"           ) \
-    ACTION( RSP_STORED,         "STORED\r\n"        ) \
-    ACTION( RSP_NOT_STORED,     "NOT_STORED\r\n"    ) \
-    ACTION( RSP_EXISTS,         "EXISTS\r\n"        ) \
-    ACTION( RSP_NOT_FOUND,      "NOT_FOUND\r\n"     ) \
-    ACTION( RSP_DELETED,        "DELETED\r\n"       ) \
-    ACTION( RSP_CLIENT_ERROR,   "CLIENT_ERROR "     ) \
-    ACTION( RSP_SERVER_ERROR,   "SERVER_ERROR "     ) \
-    ACTION( CRLF,               "\r\n" /* empty */  ) \
-    ACTION( EMPTY,              "" /* empty */      ) \
+#define MSG_CODEC(ACTION)                                \
+    ACTION( UNKNOWN,            ""/* unknown */        ) \
+    ACTION( REQ_GET,            "get  "                ) \
+    ACTION( REQ_GETS,           "gets "                ) \
+    ACTION( REQ_DELETE,         "delete "              ) \
+    ACTION( REQ_CAS,            "cas "                 ) \
+    ACTION( REQ_SET,            "set "                 ) \
+    ACTION( REQ_ADD,            "add "                 ) \
+    ACTION( REQ_REPLACE,        "replace "             ) \
+    ACTION( REQ_APPEND,         "append  "             ) \
+    ACTION( REQ_PREPEND,        "prepend "             ) \
+    ACTION( REQ_INCR,           "incr "                ) \
+    ACTION( REQ_DECR,           "decr "                ) \
+    ACTION( REQ_VERSION,        "version "             ) \
+    ACTION( REQ_QUIT,           "quit "                ) \
+    ACTION( RSP_NUM,            "" /* na */            ) \
+    ACTION( RSP_VALUE,          "VALUE "               ) \
+    ACTION( RSP_END,            "END\r\n"              ) \
+    ACTION( RSP_STORED,         "STORED\r\n"           ) \
+    ACTION( RSP_NOT_STORED,     "NOT_STORED\r\n"       ) \
+    ACTION( RSP_EXISTS,         "EXISTS\r\n"           ) \
+    ACTION( RSP_NOT_FOUND,      "NOT_FOUND\r\n"        ) \
+    ACTION( RSP_DELETED,        "DELETED\r\n"          ) \
+    ACTION( RSP_CLIENT_ERROR,   "CLIENT_ERROR "        ) \
+    ACTION( RSP_SERVER_ERROR,   "SERVER_ERROR "        ) \
+    ACTION( RSP_VERSION,        "VERSION fatcache\r\n" ) \
+    ACTION( CRLF,               "\r\n" /* empty */     ) \
+    ACTION( EMPTY,              "" /* empty */         ) \
 
 #define DEFINE_ACTION(_hash, _name) MSG_##_hash,
 typedef enum msg_type {
