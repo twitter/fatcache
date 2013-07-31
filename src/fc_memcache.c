@@ -163,6 +163,20 @@ memcache_quit(struct msg *r)
     return false;
 }
 
+/*
+ * Return true, if the memcache command is a version command, otherwise
+ * return false
+ */
+static bool
+memcache_version(struct msg *r)
+{
+    if (r->type == MSG_REQ_VERSION) {
+        return true;
+    }
+
+    return false;
+}
+
 void
 memcache_parse_req(struct msg *r)
 {
@@ -307,6 +321,11 @@ memcache_parse_req(struct msg *r)
                         break;
                     }
 
+                    if (str7cmp(m, 'v', 'e', 'r', 's', 'i', 'o', 'n')) {
+                        r->type = MSG_REQ_VERSION;
+                        break;
+                    }
+
                     break;
                 }
 
@@ -315,7 +334,7 @@ memcache_parse_req(struct msg *r)
                         goto error;
                     }
                     state = SW_SPACES_BEFORE_KEY;
-                } else if (memcache_quit(r)) {
+                } else if (memcache_quit(r) || memcache_version(r)) {
                     p = p - 1; /* go back by 1 byte */
                     state = SW_CRLF;
                 } else {
