@@ -337,6 +337,12 @@ _fc_atou32(uint8_t *line, size_t n, uint32_t *u32)
             return FC_ERROR;
         }
 
+        /* overflow */
+        if(value > (UINT32_MAX / 10) || value * 10ULL > (UINT32_MAX-(*line - '0'))) {
+            *u32 = 0UL;
+            return FC_ERROR;
+        }
+
         value = value * 10UL + (uint32_t)(*line - '0');
     }
 
@@ -358,6 +364,12 @@ _fc_atou64(uint8_t *line, size_t n, uint64_t *u64)
 
     for (value = 0ULL; n--; line++) {
         if (*line < '0' || *line > '9') {
+            return FC_ERROR;
+        }
+
+        /* overflow */
+        if(value > (UINT64_MAX / 10) || value * 10ULL > (UINT64_MAX-(*line - '0'))) {
+            *u64 = 0ULL;
             return FC_ERROR;
         }
 
