@@ -256,12 +256,17 @@ static void
 req_process_add(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     struct itemx *itx;
+    struct item *it;
 
     /* add, adds only if the mapping is not present */
     itx = itemx_getx(msg->hash, msg->md);
     if (itx != NULL) {
-        rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
-        return;
+        it = slab_read_item(itx->sid, itx->offset);
+        /* if the item hasn't expired yet */
+        if(!item_expired(it)) {
+            rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
+            return;
+        }
     }
 
     req_process_set(ctx, conn, msg);
@@ -271,10 +276,18 @@ static void
 req_process_replace(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     struct itemx *itx;
+    struct item *it;
 
     /*  replace, only replaces if the mapping is present */
     itx = itemx_getx(msg->hash, msg->md);
     if (itx == NULL) {
+        rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
+        return;
+    }
+
+    /* if the item has expired */
+    it = slab_read_item(itx->sid, itx->offset);
+    if(item_expired(it)) {
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
         return;
     }
