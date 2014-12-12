@@ -368,6 +368,13 @@ msg_recv_chain(struct context *ctx, struct conn *conn, struct msg *msg)
         return FC_ERROR;
     }
 
+    /* client initiate close? */
+    if(n == 0) {
+        conn->done = 1;
+        log_debug(LOG_INFO, "c %d is done", conn->sd);
+        return FC_OK;
+    }
+
     ASSERT((mbuf->last + n) <= mbuf->end);
     mbuf->last += n;
     msg->mlen += (uint32_t)n;
