@@ -33,6 +33,18 @@ static struct itemx *istart;         /* itemx memory start */
 static struct itemx *iend;           /* itemx memory end */
 
 /*
+ * Return true if the itemx has expired, otherwise return false. Itemx
+ * with expiry of 0 are considered as unexpirable.
+ */
+bool
+itemx_expired(struct itemx *itx)
+{
+    ASSERT(itx != NULL);
+
+    return (itx->expiry != 0 && itx->expiry < time_now()) ? true : false;
+}
+
+/*
  * Returns true, if there are no free item indexes, otherwise
  * return false.
  */
@@ -178,7 +190,7 @@ itemx_getx(uint32_t hash, uint8_t *md)
 
 void
 itemx_putx(uint32_t hash, uint8_t *md, uint32_t sid, uint32_t offset,
-           uint64_t cas)
+           rel_time_t expiry, uint64_t cas)
 {
     struct itemx *itx;
     struct itemx_tqh *bucket;
@@ -188,6 +200,7 @@ itemx_putx(uint32_t hash, uint8_t *md, uint32_t sid, uint32_t offset,
     itx = itemx_get();
     itx->sid = sid;
     itx->offset = offset;
+    itx->expiry = expiry;
     itx->cas = cas;
     fc_memcpy(itx->md, md, sizeof(itx->md));
 

@@ -25,6 +25,7 @@ struct itemx {
     uint8_t             md[20]; /* sha1 message digest */
     uint32_t            sid;    /* owner slab id */
     uint32_t            offset; /* item offset from owner slab base */
+    rel_time_t          expiry; /* expiry in secs */
     uint64_t            cas;    /* cas */
 } __attribute__ ((__packed__));
 
@@ -34,8 +35,9 @@ rstatus_t itemx_init(void);
 void itemx_deinit(void);
 
 bool itemx_empty(void);
+bool itemx_expired(struct itemx *itx);
 struct itemx *itemx_getx(uint32_t hash, uint8_t *md);
-void itemx_putx(uint32_t hash, uint8_t *md, uint32_t sid, uint32_t ioff, uint64_t cas);
+void itemx_putx(uint32_t hash, uint8_t *md, uint32_t sid, uint32_t ioff, rel_time_t expiry, uint64_t cas);
 bool itemx_removex(uint32_t hash, uint8_t *md);
 
 #endif
