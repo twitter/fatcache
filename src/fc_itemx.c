@@ -39,9 +39,17 @@ static struct itemx *iend;           /* itemx memory end */
 bool
 itemx_expired(struct itemx *itx)
 {
+    uint32_t hash;
+
     ASSERT(itx != NULL);
 
-    return (itx->expiry != 0 && itx->expiry < time_now()) ? true : false;
+    if(itx->expiry != 0 && itx->expiry < time_now()) {
+        hash = sha1_hash(itx->md);
+        itemx_removex(hash, itx->md);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /*
