@@ -33,7 +33,12 @@ item_expired(struct item *it)
 {
     ASSERT(it->magic == ITEM_MAGIC);
 
-    return (it->expiry != 0 && it->expiry < time_now()) ? true : false;
+    if(it->expiry != 0 && it->expiry < time_now()) {
+        itemx_removex(it->hash, it->md);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /*
