@@ -49,6 +49,10 @@ struct slabclass {
     size_t           size;            /* item size (const) */
     size_t           slack;           /* unusable slack space (const) */
     struct slabhinfo partial_msinfoq; /* partial slabinfo q */
+    uint32_t         nmslab;          /* # memory slab */
+    uint32_t         ndslab;          /* # disk slab */
+    uint64_t         nevict;          /* # eviect time */
+    uint64_t         nused_item;      /* # used item */
 };
 
 #define SLABCLASS_MIN_ID        0
@@ -68,4 +72,16 @@ struct item *slab_read_item(uint32_t sid, uint32_t addr);
 rstatus_t slab_init(void);
 void slab_deinit(void);
 
+uint32_t slab_msinfo_nalloc(void);
+uint32_t slab_msinfo_nfree(void);
+uint32_t slab_msinfo_nfull(void);
+uint32_t slab_msinfo_npartial(void);
+uint32_t slab_dsinfo_nalloc(void);
+uint32_t slab_dsinfo_nfree(void);
+uint32_t slab_dsinfo_nfull(void);
+uint64_t slab_nevict(void);
+uint8_t slab_max_cid(void);
+uint8_t slab_get_cid(uint32_t sid);
+struct slabclass *slab_get_class_by_cid(uint8_t cid);
+bool slab_incr_chunks_by_sid(uint32_t sid, int n);
 #endif

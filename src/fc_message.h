@@ -35,6 +35,7 @@ typedef void (*msg_parse_t)(struct msg *);
     ACTION( REQ_PREPEND,        "prepend "             ) \
     ACTION( REQ_INCR,           "incr "                ) \
     ACTION( REQ_DECR,           "decr "                ) \
+    ACTION( REQ_STATS,           "stats "              ) \
     ACTION( REQ_VERSION,        "version "             ) \
     ACTION( REQ_QUIT,           "quit "                ) \
     ACTION( RSP_NUM,            "" /* na */            ) \
@@ -149,5 +150,6 @@ void rsp_send_status(struct context *ctx, struct conn *conn, struct msg *msg, ms
 void rsp_send_error(struct context *ctx, struct conn *conn, struct msg *msg, msg_type_t rsp_type, int err);
 void rsp_send_value(struct context *ctx, struct conn *conn, struct msg *msg, struct item *it, uint64_t cas);
 void rsp_send_num(struct context *ctx, struct conn *conn, struct msg *msg, struct item *it);
+void rsp_send_string(struct context *ctx, struct conn *conn, struct msg *msg, struct string *str);
 
 #endif
