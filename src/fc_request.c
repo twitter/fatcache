@@ -105,7 +105,6 @@ req_recv_next(struct context *ctx, struct conn *conn, bool alloc)
             req_put(msg);
         }
 
-#if 0
         /*
          * TCP half-close enables the client to terminate its half of the
          * connection (i.e. the client no longer sends data), but it still
@@ -117,7 +116,6 @@ req_recv_next(struct context *ctx, struct conn *conn, bool alloc)
             conn->done = 1;
             log_debug(LOG_INFO, "c %d is done", conn->sd);
         }
-#endif
 
         return NULL;
     }

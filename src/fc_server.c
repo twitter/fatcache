@@ -77,6 +77,12 @@ server_accept(struct context *ctx, struct conn *s)
                  strerror(errno));
     }
 
+    status = fc_set_keepalive(c->sd);
+    if (status < 0) {
+        log_warn("set tcp keepalive on c %d failed, ignored: %s", sd,
+                 strerror(errno));
+    }
+
     status = event_add_conn(ctx->ep, c);
     if (status < 0) {
         log_error("event add conn e %d c %d failed: %s", ctx->ep, sd,

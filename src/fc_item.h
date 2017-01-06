@@ -87,7 +87,6 @@ item_data(struct item *it)
     return it->end + it->nkey;
 }
 
-bool item_expired(struct item *it);
 struct slab *item_to_slab(struct item *it);
 uint8_t item_slabcid(uint8_t nkey, uint32_t ndata);
 
