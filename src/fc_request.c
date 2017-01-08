@@ -190,6 +190,10 @@ req_process_get(struct context *ctx, struct conn *conn, struct msg *msg)
         return;
     }
 
+    if (itemx_expired(itx)) {
+        rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_FOUND);
+        return;
+    }
     /*
      * On a hit, we read the item with address [sid, offset] and respond
      * with item value if the item hasn't expired yet.
@@ -197,10 +201,6 @@ req_process_get(struct context *ctx, struct conn *conn, struct msg *msg)
     it = slab_read_item(itx->sid, itx->offset);
     if (it == NULL) {
         rsp_send_error(ctx, conn, msg, MSG_RSP_SERVER_ERROR, errno);
-        return;
-    }
-    if (item_expired(it)) {
-        rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_FOUND);
         return;
     }
 
@@ -254,17 +254,12 @@ static void
 req_process_add(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     struct itemx *itx;
-    struct item *it;
 
     /* add, adds only if the mapping is not present */
     itx = itemx_getx(msg->hash, msg->md);
-    if (itx != NULL) {
-        it = slab_read_item(itx->sid, itx->offset);
-        /* if the item hasn't expired yet */
-        if(!item_expired(it)) {
-            rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
-            return;
-        }
+    if (itx != NULL && !itemx_expired(itx)) {
+        rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
+        return;
     }
 
     req_process_set(ctx, conn, msg);
@@ -274,18 +269,10 @@ static void
 req_process_replace(struct context *ctx, struct conn *conn, struct msg *msg)
 {
     struct itemx *itx;
-    struct item *it;
 
     /*  replace, only replaces if the mapping is present */
     itx = itemx_getx(msg->hash, msg->md);
-    if (itx == NULL) {
-        rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
-        return;
-    }
-
-    /* if the item has expired */
-    it = slab_read_item(itx->sid, itx->offset);
-    if(item_expired(it)) {
+    if (itx == NULL || itemx_expired(itx)) {
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
         return;
     }
@@ -339,7 +326,7 @@ req_process_concat(struct context *ctx, struct conn *conn, struct msg *msg)
 
     /* 1). look up existing itemx */
     itx = itemx_getx(msg->hash, msg->md);
-    if (itx == NULL) {
+    if (itx == NULL || itemx_expired(itx)) {
         /* 2a). miss -> return NOT_STORED */
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
         return;
@@ -349,10 +336,6 @@ req_process_concat(struct context *ctx, struct conn *conn, struct msg *msg)
     oit = slab_read_item(itx->sid, itx->offset);
     if (oit == NULL) {
         rsp_send_error(ctx, conn, msg, MSG_RSP_SERVER_ERROR, errno);
-        return;
-    }
-    if (item_expired(oit)) {
-        rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_STORED);
         return;
     }
 
@@ -410,7 +393,7 @@ req_process_num(struct context *ctx, struct conn *conn, struct msg *msg)
 
     /* 1). look up existing itemx */
     itx = itemx_getx(msg->hash, msg->md);
-    if (itx == NULL) {
+    if (itx == NULL || itemx_expired(itx)) {
         /* 2a). miss -> return NOT_FOUND */
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_FOUND);
         return;
@@ -420,10 +403,6 @@ req_process_num(struct context *ctx, struct conn *conn, struct msg *msg)
     it = slab_read_item(itx->sid, itx->offset);
     if (it == NULL) {
         rsp_send_error(ctx, conn, msg, MSG_RSP_SERVER_ERROR, errno);
-        return;
-    }
-    if (item_expired(it)) {
-        rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_FOUND);
         return;
     }
 

@@ -28,7 +28,6 @@ struct item {
     uint8_t           unused[2];  /* unused */
     uint8_t           nkey;       /* key length */
     uint32_t          ndata;      /* date length */
-    rel_time_t        expiry;     /* expiry in secs */
     uint32_t          flags;      /* flags opaque to the server */
     uint8_t           md[20];     /* key message digest */
     uint32_t          hash;       /* key hash */
@@ -88,7 +87,6 @@ item_data(struct item *it)
     return it->end + it->nkey;
 }
 
-bool item_expired(struct item *it);
 struct slab *item_to_slab(struct item *it);
 uint8_t item_slabcid(uint8_t nkey, uint32_t ndata);
 

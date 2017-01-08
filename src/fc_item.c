@@ -25,23 +25,6 @@ extern struct settings settings;
 static uint64_t cas_id;
 
 /*
- * Return true if the item has expired, otherwise return false. Items
- * with expiry of 0 are considered as unexpirable.
- */
-bool
-item_expired(struct item *it)
-{
-    ASSERT(it->magic == ITEM_MAGIC);
-
-    if(it->expiry != 0 && it->expiry < time_now()) {
-        itemx_removex(it->hash, it->md);
-        return true;
-    } else {
-        return false;
-    }
-}
-
-/*
  * Return the owner slab of item it.
  */
 struct slab *
@@ -96,7 +79,6 @@ item_get(uint8_t *key, uint8_t nkey, uint8_t cid, uint32_t ndata,
     it->cid = cid;
     it->nkey = nkey;
     it->ndata = ndata;
-    it->expiry = expiry;
     it->flags = flags;
     fc_memcpy(it->md, md, sizeof(it->md));
     it->hash = hash;
@@ -105,9 +87,9 @@ item_get(uint8_t *key, uint8_t nkey, uint8_t cid, uint32_t ndata,
 
     log_debug(LOG_VERB, "get it '%.*s' at offset %"PRIu32" with cid %"PRIu8
               " expiry %u", it->nkey, item_key(it), it->offset, it->cid,
-              it->expiry);
+              expiry);
 
-    itemx_putx(it->hash, it->md, it->sid, it->offset, ++cas_id);
+    itemx_putx(it->hash, it->md, it->sid, it->offset, expiry, ++cas_id);
 
     return it;
 }

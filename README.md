@@ -46,6 +46,7 @@ struct itemx {
   uint8_t             md[20]; /* sha1 message digest */
   uint32_t            sid;    /* owner slab id */
   uint32_t            offset; /* item offset from owner slab base */
+  rel_time_t          expiry; /* expiry in secs */
   uint64_t            cas;    /* cas */
 } __attribute__ ((__packed__));
 ```
@@ -54,9 +55,9 @@ Each index entry contains both object-specific information (key name, &c.) and d
 
 To further reduce the memory consumed by the index, we store the SHA-1 hash of the key in each index entry, instead of the key itself. The SHA-1 hash acts as the unique identifier for each object. The on-disk object format contains the complete object key and value. False positives from SHA-1 hash collisions are detected after object retrieval from the disk by comparison with the requested key. If there are collisions on the write path, new objects with the same hash key simply overwrite previous objects.
 
-The index entry (struct itemx) on a 64-bit system is 44 bytes in size. It is possible to further reduce index entry size to 28 bytes, if CAS is unsupported, MD5 hashing is used, and the next pointer is reduced to 4 bytes.
+The index entry (struct itemx) on a 64-bit system is 48 bytes in size. It is possible to further reduce index entry size to 32 bytes, if CAS is unsupported, MD5 hashing is used, and the next pointer is reduced to 4 bytes.
 
-At this point, it is instructive to consider the relative size of fatcache's index and the on-disk data. With a 44 byte index entry, an index consuming 44 MB of memory can address 1M objects. If the average object size is 1 KB, then a 44 MB index can address 1 GB of on-disk storage - a 23x memory overcommit. If the average object size is 500 bytes, then a 44 MB index can address 500 MB of SSD - a 11x memory overcommit. Index size and object size relate in this way to determine the addressable capacity of the SSD.
+At this point, it is instructive to consider the relative size of fatcache's index and the on-disk data. With a 44 byte index entry, an index consuming 48 MB of memory can address 1M objects. If the average object size is 1 KB, then a 48 MB index can address 1 GB of on-disk storage - a 23x memory overcommit. If the average object size is 500 bytes, then a 48 MB index can address 500 MB of SSD - a 11x memory overcommit. Index size and object size relate in this way to determine the addressable capacity of the SSD.
 
 ## Build
 
