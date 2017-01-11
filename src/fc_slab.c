@@ -47,6 +47,7 @@ static size_t dspace;                  /* disk space */
 static uint32_t nmslab;                /* # memory slabs */
 static uint32_t ndslab;                /* # disk slabs */
 
+static uint64_t nevict;
 static uint8_t *evictbuf;              /* evict buffer */
 static uint8_t *readbuf;               /* read buffer */
 
@@ -258,6 +259,9 @@ slab_evict(void)
     /* move disk slab from full to free q */
     nfree_dsinfoq++;
     TAILQ_INSERT_TAIL(&free_dsinfoq, sinfo, tqe);
+    nevict++;
+    c->nevict++;
+    c->ndslab--;
 
     return FC_OK;
 }
@@ -319,6 +323,8 @@ _slab_drain(void)
         return FC_ERROR;
     }
 
+    ctable[msinfo->cid].nmslab--;
+    ctable[msinfo->cid].ndslab++;
     log_debug(LOG_DEBUG, "drain slab at memory (sid %"PRIu32" addr %"PRIu32") "
               "to disk (sid %"PRIu32" addr %"PRIu32")", msinfo->sid,
               msinfo->addr, dsinfo->sid, dsinfo->addr);
@@ -421,6 +427,7 @@ slab_get_item(uint8_t cid)
         sinfo = TAILQ_FIRST(&free_msinfoq);
         ASSERT(nfree_msinfoq > 0);
         nfree_msinfoq--;
+        c->nmslab++;
         TAILQ_REMOVE(&free_msinfoq, sinfo, tqe);
 
         /* init partial sinfo */
@@ -531,6 +538,10 @@ slab_init_ctable(void)
         c->size = profile[cid];
         c->slack = slab_data_size() - (c->nitem * c->size);
         TAILQ_INIT(&c->partial_msinfoq);
+        c->nmslab = 0;
+        c->ndslab = 0;
+        c->nevict = 0;
+        c->nused_item = 0;
     }
 
     return FC_OK;
@@ -700,4 +711,89 @@ slab_deinit(void)
 {
     slab_deinit_ctable();
     slab_deinit_stable();
+}
+
+uint32_t
+slab_msinfo_nalloc(void)
+{
+    return nmslab;
+}
+
+uint32_t
+slab_msinfo_nfree(void)
+{
+    return nfree_msinfoq;
+}
+
+uint32_t
+slab_msinfo_nfull(void)
+{
+    return nfull_msinfoq;
+}
+
+uint32_t
+slab_msinfo_npartial(void)
+{
+    return nmslab - nfree_msinfoq - nfull_msinfoq;
+}
+
+uint32_t
+slab_dsinfo_nalloc(void)
+{
+    return ndslab;
+}
+
+uint32_t
+slab_dsinfo_nfree(void)
+{
+    return nfree_dsinfoq;
+}
+
+uint32_t
+slab_dsinfo_nfull(void)
+{
+    return nfull_dsinfoq;
+}
+
+uint64_t
+slab_nevict(void)
+{
+    return nevict;
+}
+
+uint8_t
+slab_max_cid(void)
+{
+    return nctable;
+}
+
+uint8_t
+slab_get_cid(uint32_t sid)
+{
+    ASSERT(sid < nstable);
+    return stable[sid].cid;
+}
+
+struct slabclass *
+slab_get_class_by_cid(uint8_t cid)
+{
+    if (cid > nctable) {
+        return NULL;
+    }
+    return &ctable[cid];
+}
+
+bool
+slab_incr_chunks_by_sid(uint32_t sid, int n)
+{
+    struct slabinfo*sinfo;
+    struct slabclass *c;
+
+    sinfo = &stable[sid];
+    if (sinfo == NULL) {
+        return false;
+    }
+    c = &ctable[sinfo->cid];
+    c->nused_item += n;
+    return true;
 }

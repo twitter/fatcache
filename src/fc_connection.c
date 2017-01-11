@@ -21,6 +21,7 @@
 
 extern struct settings settings;
 
+static uint32_t nalloc_conn;              /* total conn num */
 static uint32_t nfree_connq;              /* # free conn q */
 static struct conn_tqh free_connq;        /* free conn q */
 
@@ -31,6 +32,7 @@ conn_init(void)
 {
     log_debug(LOG_DEBUG, "conn size %d", sizeof(struct conn));
     nfree_connq = 0;
+    nalloc_conn = 0;
     TAILQ_INIT(&free_connq);
 }
 
@@ -181,6 +183,7 @@ _conn_get(void)
         if (conn == NULL) {
             return NULL;
         }
+        ++nalloc_conn;
     }
 
     /* extra stuff */
@@ -239,4 +242,22 @@ conn_get(int sd, bool client)
     log_debug(LOG_VVERB, "get conn %p c %d", c, c->sd);
 
     return c;
+}
+
+uint32_t
+conn_total(void)
+{
+    return nalloc_conn - 1;
+}
+
+uint32_t
+conn_nused(void)
+{
+    return nalloc_conn - nfree_connq - 1;
+}
+
+uint32_t
+conn_nfree(void)
+{
+    return nfree_connq;
 }

@@ -107,6 +107,44 @@ rsp_send_done(struct context *ctx, struct conn *conn, struct msg *msg)
     req_put(pmsg);
 }
 
+void rsp_send_string(struct context *ctx, struct conn *conn, struct msg *msg,
+                     struct string *str)
+{
+    rstatus_t status;   /* return status */
+    struct msg *pmsg;   /* peer response */
+
+    if(!str) return;
+
+    pmsg = rsp_get(conn);
+    if (pmsg == NULL) {
+        req_process_error(ctx, conn, msg, ENOMEM);
+        return;
+    }
+
+    ASSERT(msg->request);
+    ASSERT(msg->peer == NULL);
+    ASSERT(!msg->done);
+    ASSERT(!pmsg->request);
+
+    status = mbuf_copy_from(&pmsg->mhdr, str->data, str->len);
+    if (status != FC_OK) {
+        req_process_error(ctx, conn, msg, errno);
+        return;
+    }
+    pmsg->mlen += str->len;
+
+    /* mark response as done */
+    msg->done = 1;
+    msg->peer = pmsg;
+    pmsg->peer = msg;
+
+    status = event_add_out(ctx->ep, conn);
+    if (status != FC_OK) {
+        req_process_error(ctx, conn, msg, errno);
+        return;
+    }
+}
+
 void
 rsp_send_status(struct context *ctx, struct conn *conn, struct msg *msg,
                 msg_type_t rsp_type)

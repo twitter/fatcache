@@ -177,6 +177,12 @@ memcache_version(struct msg *r)
     return false;
 }
 
+static bool
+memcache_stats(struct msg *r)
+{
+    return r->type == MSG_REQ_STATS;
+}
+
 void
 memcache_parse_req(struct msg *r)
 {
@@ -297,6 +303,12 @@ memcache_parse_req(struct msg *r)
 
                     break;
 
+                case 5:
+                    if (str5cmp(m, 's', 't', 'a', 't', 's')) {
+                        r->type = MSG_REQ_STATS;
+                        break;
+                    }
+                    break;
                 case 6:
                     if (str6cmp(m, 'a', 'p', 'p', 'e', 'n', 'd')) {
                         r->type = MSG_REQ_APPEND;
@@ -337,6 +349,14 @@ memcache_parse_req(struct msg *r)
                 } else if (memcache_quit(r) || memcache_version(r)) {
                     p = p - 1; /* go back by 1 byte */
                     state = SW_CRLF;
+                } else if(memcache_stats(r)) {
+                    while(*p == ' ') p++; /* trim the space */
+                    if (*p == '\r') {
+                        state = SW_CRLF;
+                    } else {
+                        state = SW_SPACES_BEFORE_KEY; 
+                    }
+                    p = p - 1;
                 } else {
                     goto error;
                 }

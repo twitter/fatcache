@@ -67,4 +67,8 @@ ssize_t conn_sendv(struct conn *conn, struct array *sendv, size_t nsend);
 struct conn *conn_get(int sd, bool client);
 void conn_put(struct conn *c);
 
+uint32_t conn_total(void);
+uint32_t conn_nused(void);
+uint32_t conn_nfree(void);
+
 #endif

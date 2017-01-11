@@ -40,4 +40,6 @@ struct itemx *itemx_getx(uint32_t hash, uint8_t *md);
 void itemx_putx(uint32_t hash, uint8_t *md, uint32_t sid, uint32_t ioff, rel_time_t expiry, uint64_t cas);
 bool itemx_removex(uint32_t hash, uint8_t *md);
 
+uint64_t itemx_nalloc(void);
+uint64_t itemx_nfree(void);
 #endif

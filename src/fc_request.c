@@ -16,9 +16,12 @@
  */
 
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <fc_core.h>
 #include <fc_event.h>
+#include <fc_stats.h>
 
 extern struct string msg_strings[];
 
@@ -204,20 +207,27 @@ req_process_get(struct context *ctx, struct conn *conn, struct msg *msg)
         return;
     }
 
+    STATS_HIT_INCR(msg->type);
+    SC_STATS_INCR(it->cid, msg->type);
     rsp_send_value(ctx, conn, msg, it, itx->cas);
 }
 
 static void
 req_process_delete(struct context *ctx, struct conn *conn, struct msg *msg)
 {
-    bool found;
+    uint8_t cid;
+    struct itemx *itx;
 
-    found = itemx_removex(msg->hash, msg->md);
-    if (!found) {
+    itx = itemx_getx(msg->hash, msg->md);
+    if (itx == NULL) {
         rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_FOUND);
         return;
     }
+    cid = slab_get_cid(itx->sid);
+    itemx_removex(msg->hash, msg->md);
 
+    STATS_HIT_INCR(msg->type);
+    SC_STATS_INCR(cid, msg->type);
     rsp_send_status(ctx, conn, msg, MSG_RSP_DELETED);
 }
 
@@ -247,6 +257,7 @@ req_process_set(struct context *ctx, struct conn *conn, struct msg *msg)
 
     mbuf_copy_to(&msg->mhdr, msg->value, item_data(it), msg->vlen);
 
+    SC_STATS_INCR(cid, msg->type);
     rsp_send_status(ctx, conn, msg, MSG_RSP_STORED);
 }
 
@@ -310,6 +321,7 @@ req_process_cas(struct context *ctx, struct conn *conn, struct msg *msg)
         return;
     }
 
+    STATS_HIT_INCR(msg->type);
     req_process_set(ctx, conn, msg);
 }
 
@@ -442,7 +454,35 @@ req_process_num(struct context *ctx, struct conn *conn, struct msg *msg)
     /* 7). copy numstr to it */
     fc_memcpy(item_data(it), numstr, n);
 
+    STATS_HIT_INCR(msg->type);
     rsp_send_num(ctx, conn, msg, it);
+}
+
+static void req_process_stats(struct context *ctx, struct conn *conn, struct msg *msg)
+{
+    int nkey;
+    uint8_t *key;
+    struct string str;
+    buffer *buf = NULL;
+
+    key = msg->key_start;
+    nkey = (uint8_t)(msg->key_end - msg->key_start);
+
+    if (fc_strlen("settings") == nkey && !fc_strncmp("settings", key, nkey)) {
+        buf = stats_settings();
+    } else if (fc_strlen("slabs") == nkey && !fc_strncmp("slabs", key, nkey)) {
+        buf = stats_slabs();
+    } else {
+        buf = stats_server();
+    }
+    if (buf == NULL) {
+        rsp_send_error(ctx, conn, msg, MSG_RSP_SERVER_ERROR, ENOMEM);
+    } else {
+        str.data = buf->data;
+        str.len = buf->nused;
+        rsp_send_string(ctx, conn, msg, &str);
+        stats_dealloc_buffer(buf);
+    }
 }
 
 void
@@ -488,7 +528,7 @@ req_process(struct context *ctx, struct conn *conn, struct msg *msg)
         req_enqueue_omsgq(ctx, conn, msg);
     }
 
-    ASSERT(msg->key_end > msg->key_start);
+    ASSERT((msg->key_end > msg->key_start) || msg->type >= MSG_REQ_STATS);
     key = msg->key_start;
     keylen = msg->key_end - msg->key_start;
 
@@ -501,6 +541,7 @@ req_process(struct context *ctx, struct conn *conn, struct msg *msg)
     sha1(key, keylen, msg->md);
     msg->hash = sha1_hash(msg->md);
 
+    STATS_INCR(msg->type);
     switch (msg->type) {
     case MSG_REQ_GET:
     case MSG_REQ_GETS:
@@ -539,6 +580,10 @@ req_process(struct context *ctx, struct conn *conn, struct msg *msg)
     case MSG_REQ_INCR:
     case MSG_REQ_DECR:
         req_process_num(ctx, conn, msg);
+        break;
+
+    case MSG_REQ_STATS:
+        req_process_stats(ctx, conn, msg);
         break;
 
     default:

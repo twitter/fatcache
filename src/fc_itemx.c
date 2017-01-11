@@ -26,6 +26,7 @@ static uint64_t nitx;                /* # item index */
 static uint64_t nitx_table;          /* # item index table entries */
 static struct itemx_tqh *itx_table;  /* item index table */
 
+static uint64_t nalloc_itemx;        /* # nalloc itemx */
 static uint64_t nfree_itemxq;        /* # free itemx q */
 static struct itemx_tqh free_itemxq; /* free itemx q */
 
@@ -140,6 +141,7 @@ itemx_init(void)
     for (itx = istart; itx < iend; itx++) {
         itemx_put(itx);
     }
+    nalloc_itemx = n;
 
     return FC_OK;
 }
@@ -217,6 +219,7 @@ itemx_putx(uint32_t hash, uint8_t *md, uint32_t sid, uint32_t offset,
     bucket = itemx_bucket(hash);
     nitx++;
     STAILQ_INSERT_HEAD(bucket, itx, tqe);
+    slab_incr_chunks_by_sid(itx->sid, 1);
 }
 
 bool
@@ -233,8 +236,21 @@ itemx_removex(uint32_t hash, uint8_t *md)
     bucket = itemx_bucket(hash);
     nitx--;
     STAILQ_REMOVE(bucket, itx, itemx, tqe);
+    slab_incr_chunks_by_sid(itx->sid, -1);
 
     itemx_put(itx);
 
     return true;
+}
+
+uint64_t
+itemx_nalloc(void)
+{
+    return nalloc_itemx;
+}
+
+uint64_t
+itemx_nfree(void)
+{
+    return nfree_itemxq;
 }
