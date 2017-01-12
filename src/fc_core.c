@@ -155,7 +155,7 @@ core_core(struct context *ctx, struct conn *conn, uint32_t events)
     /* read takes precedence over write */
     if (events & (EPOLLIN | EPOLLHUP)) {
         status = core_recv(ctx, conn);
-        if (status != FC_OK || conn->done || conn->err) {
+        if (conn->client && (status != FC_OK || conn->done || conn->err)) {
             core_close(ctx, conn);
             return;
         }

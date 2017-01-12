@@ -50,6 +50,7 @@
 
 #define FC_INDEX_MEMORY     (64 * MB)
 #define FC_SLAB_MEMORY      (64 * MB)
+#define FC_MAX_CONNS        (10240)
 
 #define FC_SERVER_ID        0
 #define FC_SERVER_N         1
@@ -97,6 +98,7 @@ static char short_options[] =
     "I:" /* slab size in MB */
     "i:" /* max memory for item index in MB */
     "m:" /* max memory for slab in MB */
+    "c:" /* max connections  */
     "z:" /* profile of slab item sizes */
     "D:" /* path to ssd device file */
     "s:" /* server instance id */
@@ -107,7 +109,7 @@ fc_show_usage(void)
 {
     log_stderr(
         "Usage: fatcache [-?hVdS] [-o output file] [-v verbosity level]" CRLF
-        "           [-p port] [-a addr] [-e hash power]" CRLF
+        "           [-p port] [-a addr] [-e hash power] [-c max connections]" CRLF
         "           [-f factor] [-n min item chunk size] [-I slab size]" CRLF
         "           [-i max index memory[ [-m max slab memory]" CRLF
         "           [-z slab profile] [-D ssd device] [-s server id]" CRLF
@@ -138,13 +140,15 @@ fc_show_usage(void)
         "  -n, --min-item-chunk-size=N : set the minimum item chunk size in bytes (default: %d bytes)" CRLF
         "  -I, --slab-size=N           : set slab size in bytes (default: %d bytes)" CRLF
         "  -i, --max-index-memory=N    : set the maximum memory to use for item indexes in MB (default: %d MB)" CRLF
-        "  -m, --max-slab-memory=N     : set the maximum memory to use for slabs in MB (default: %d MB)"
+        "  -m, --max-slab-memory=N     : set the maximum memory to use for slabs in MB (default: %d MB)" CRLF
+        "  -c, --max-connections=N     : set max simultaneous connections (default: %d)"
         "",
         FC_FACTOR,
         FC_CHUNK_SIZE,
         SLAB_SIZE,
         FC_INDEX_MEMORY / MB,
-        FC_SLAB_MEMORY / MB);
+        FC_SLAB_MEMORY / MB,
+        FC_MAX_CONNS);
     log_stderr(
         "  -z, --slab-profile=S        : set the profile of slab item chunk sizes (default: n/a)" CRLF
         "  -D, --ssd-device=S          : set the path to the ssd device file (default: n/a)" CRLF
@@ -270,6 +274,7 @@ fc_set_default_options(void)
     settings.max_slab_memory = FC_SLAB_MEMORY;
     settings.chunk_size = FC_CHUNK_SIZE;
     settings.slab_size = FC_SLAB_SIZE;
+    settings.max_conns = FC_MAX_CONNS;
 
     memset(settings.profile, 0, sizeof(settings.profile));
     settings.profile_last_id = SLABCLASS_MAX_ID;
@@ -429,7 +434,14 @@ fc_get_options(int argc, char **argv)
 
             settings.max_slab_memory = (size_t)value * MB;
             break;
-
+        case 'c':
+            value = fc_atoi(optarg, strlen(optarg));
+            if (value < 0) {
+                log_stderr("fatcache: option -c should no less than zero");
+                return FC_ERROR;
+            }
+            settings.max_conns = value;
+            break;
         case 'z':
             parse_profile = 1;
             profile_optarg = (uint8_t *)optarg;

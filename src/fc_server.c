@@ -54,6 +54,12 @@ server_accept(struct context *ctx, struct conn *s)
         break;
     }
 
+    if (settings.max_conns > 0 && conn_nused() >= settings.max_conns) {
+        close(sd);
+        log_warn("server reached max connections");
+        return FC_OK;
+    }
+
     c = conn_get(sd, true);
     if (c == NULL) {
         log_error("get conn for c %d from s %d failed: %s", sd, s->sd,

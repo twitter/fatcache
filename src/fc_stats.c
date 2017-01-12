@@ -282,6 +282,7 @@ stats_settings(void)
     APPEND_STAT(stats_buf, "chunk_size", "%u", settings.chunk_size);
     APPEND_STAT(stats_buf, "max_chunk_size", "%u", settings.max_chunk_size);
     APPEND_STAT(stats_buf, "slab_size", "%u", settings.slab_size);
+    APPEND_STAT(stats_buf, "max_conns", "%d", settings.max_conns);
     APPEND_STAT(stats_buf, "ssd_device", "%s", settings.ssd_device);
     APPEND_STAT(stats_buf, "server_id", "%u", settings.server_id);
     APPEND_STAT(stats_buf, "server_count", "%u", settings.server_n);
