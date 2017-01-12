@@ -85,7 +85,7 @@ To build fatcache from source with _debug logs enabled_ and _assertions disabled
 ## Help
 
     Usage: fatcache [-?hVdS] [-o output file] [-v verbosity level]
-               [-p port] [-a addr] [-e hash power]
+               [-p port] [-a addr] [-e hash power] [-c max connections]
                [-f factor] [-n min item chunk size] [-I slab size]
                [-i max index memory[ [-m max slab memory]
                [-z slab profile] [-D ssd device] [-s server id]
@@ -105,6 +105,7 @@ To build fatcache from source with _debug logs enabled_ and _assertions disabled
       -I, --slab-size=N           : set slab size in bytes (default: 1048576 bytes)
       -i, --max-index-memory=N    : set the maximum memory to use for item indexes in MB (default: 64 MB)
       -m, --max-slab-memory=N     : set the maximum memory to use for slabs in MB (default: 64 MB)
+      -c, --max-connections=N     : set max simultaneous connections (default: 10240)
       -z, --slab-profile=S        : set the profile of slab item chunk sizes (default: n/a)
       -D, --ssd-device=S          : set the path to the ssd device file (default: n/a)
       -s, --server-id=I/N         : set fatcache instance to be I out of total N instances (default: 0/1)

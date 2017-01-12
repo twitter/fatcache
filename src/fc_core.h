@@ -143,6 +143,7 @@ struct settings {
 
     char     *ssd_device;                  /* path to ssd device file */
 
+    int max_conns;                         /* maximum connection num */
     uint32_t server_id;                    /* server id */
     uint32_t server_n;                     /* # server */
 };
