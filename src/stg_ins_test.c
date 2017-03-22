@@ -1,4 +1,6 @@
 //#include <fc_core.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <fc_common.h>
 
 #include <fc_queue.h>
@@ -45,7 +47,7 @@ static void set_options(){
     settings.daemonize = FC_DAEMONIZE;
 
     settings.log_filename = FC_LOG_FILE;
-    settings.verbose = 11;//FC_LOG_DEFAULT;
+    settings.verbose = 6;//11;//FC_LOG_DEFAULT;
 
     settings.port = FC_PORT;
     settings.addr = FC_ADDR;
@@ -203,6 +205,71 @@ int delete(char* key, int nkey){
     itemx_removex(hash, md);   
     return 0;
 }
+
+int num(char *src_key, int src_key_len, int num, int expiry, int flags){
+    rstatus_t status;
+    uint8_t *pkey, nkey, cid;
+    struct item *it;
+    struct itemx *itx;
+    uint64_t cnum;
+    int64_t nnum;
+    char numstr[FC_UINT64_MAXLEN];
+    int n;
+    
+    pkey = (uint8_t *)src_key;
+    nkey = (uint8_t)(src_key_len);
+
+    uint8_t  md[20];
+    uint32_t hash;
+    sha1(pkey, nkey, md);
+    hash = sha1_hash(md);
+    
+    /* 1). look up existing itemx */
+    itx = itemx_getx(hash, md);
+    if (itx == NULL || itemx_expired(itx)) {
+        /* 2a). miss -> return NOT_FOUND */
+        //rsp_send_status(ctx, conn, msg, MSG_RSP_NOT_FOUND);
+        return -1;
+    }
+
+    /* 2b). hit -> read existing item into it */
+    it = slab_read_item(itx->sid, itx->offset);
+    if (it == NULL) {
+        //rsp_send_error(ctx, conn, msg, MSG_RSP_SERVER_ERROR, errno);
+        return -2;
+    }
+
+    /* 3). sanity check item data to be a number */
+    status = fc_atou64(item_data(it), it->ndata, &cnum);
+    if (status != FC_OK) {
+        //rsp_send_error(ctx, conn, msg, MSG_RSP_CLIENT_ERROR, EINVAL);
+        return -3;
+    }
+
+    /* 4). remove existing itemx of it */
+    itemx_removex(hash, md);
+
+    /* 5). compute the new incr/decr number nnum and numstr */
+    nnum = cnum + num;
+    if (nnum<0)
+        nnum = 0;
+    n = _scnprintf(numstr, sizeof(numstr), "%"PRIu64"", (uint64_t)nnum);
+
+    /* 6). alloc new item that can hold n worth of bytes */
+    cid = item_slabcid(nkey, n);
+    ASSERT(cid != SLABCLASS_INVALID_ID);
+
+    it = item_get(pkey, nkey, cid, n, time_reltime(expiry), flags,
+                   md, hash);
+    if (it == NULL) {
+        //rsp_send_error(ctx, conn, msg, MSG_RSP_SERVER_ERROR, ENOMEM);
+        return -2;
+    }
+
+    /* 7). copy numstr to it */
+    memcpy(item_data(it), numstr, n);
+    return 0;
+}
 int main(int argc, char** argv){
     set_options();
     fc_generate_profile();
@@ -213,7 +280,7 @@ int main(int argc, char** argv){
     char *ret=NULL;
     int vl = 0;
     if (argc > 1){
-        printf("%d", strlen(argv[1]));
+        printf("%u\n", strlen(argv[1]));
         vl =  strlen(argv[1]);
         value = malloc((strlen(argv[1])+1) * sizeof(char));
         ret = malloc((strlen(argv[1])+1) * sizeof(char));
@@ -235,7 +302,20 @@ int main(int argc, char** argv){
     if (get(key, 5, ret) == 1){
         printf("delete no data\n");
     }
-    
+    if (put(key, 5, value, strlen(value), 0, 1) == 0){
+        printf("set data ok\n");
+    }
+    if (get(key, 5, ret) == 1){
+        printf("error, no data\n");
+    }else{
+        printf("get data: %s\n", ret);
+    }
+    if (num(key, 5, 12, 0, 1) == 0){
+        printf("num data ok\n");
+    }
+    if (get(key, 5, ret) == 1){
+        printf("get data: %s\n", ret);
+    }
 
     
     return 0;
