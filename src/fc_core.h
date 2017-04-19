@@ -48,14 +48,6 @@
 #define FC_BACKTRACE 1
 #endif
 
-#define FC_OK        0
-#define FC_ERROR    -1
-#define FC_EAGAIN   -2
-#define FC_ENOMEM   -3
-
-typedef int rstatus_t; /* return type */
-typedef int err_t;     /* error type */
-
 struct array;
 struct context;
 struct epoll_event;
@@ -68,30 +60,7 @@ struct mhdr;
 struct item;
 struct slab;
 struct slabclass;
-
-#include <stddef.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <inttypes.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <pthread.h>
-#include <limits.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <time.h>
-#include <limits.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/time.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <sys/epoll.h>
-#include <sys/mman.h>
+#include "fc_common.h"
 
 #include <fc_array.h>
 #include <fc_string.h>
@@ -120,32 +89,7 @@ struct context {
     struct epoll_event *event;      /* epoll event */
 };
 
-struct settings {
-    bool     daemonize;                    /* daemonize? */
-
-    char     *log_filename;                /* log filename */
-    int      verbose;                      /* log verbosity level */
-
-    int      port;                         /* listening port */
-    char     *addr;                        /* listening address */
-
-    int      hash_power;                   /* index hash table size as power of 2 */
-
-    double   factor;                       /* item chunk size growth factor */
-    size_t   max_slab_memory;              /* maximum memory allowed for slabs in bytes */
-    size_t   max_index_memory;             /* maximum memory allowed for in bytes */
-    size_t   chunk_size;                   /* minimum item chunk size */
-    size_t   max_chunk_size;               /* maximum item chunk size */
-    size_t   slab_size;                    /* slab size */
-
-    size_t   profile[SLABCLASS_MAX_IDS];   /* slab profile */
-    uint8_t  profile_last_id;              /* last id in slab profile */
-
-    char     *ssd_device;                  /* path to ssd device file */
-
-    uint32_t server_id;                    /* server id */
-    uint32_t server_n;                     /* # server */
-};
+#include "fc_settings.h"
 
 rstatus_t core_init(void);
 void core_deinit(void);

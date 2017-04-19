@@ -1,7 +1,7 @@
-bin_PROGRAMS = fatcache
+bin_PROGRAMS = fatcache stg_ins_test
 
 AM_CPPFLAGS = -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64
-
+CFLAGS = -g
 AM_CFLAGS = -Wall
 AM_CFLAGS += -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls
 AM_CFLAGS += -fno-strict-aliasing
@@ -33,3 +33,14 @@ fatcache_SOURCES =			\
 	fc_stats.c fc_stats.h		\
 	fc_queue.h			\
 	fc.c
+
+stg_ins_test_SOURCES =			\
+	fc_slab.c fc_slab.h		\
+	fc_item.c fc_item.h		\
+	fc_itemx.c fc_itemx.h		\
+	fc_time.c fc_time.h		\
+	fc_sha1.c fc_sha1.h		\
+	fc_log.c fc_log.h		\
+	fc_util.c fc_util.h		\
+	fc_queue.h			\
+    stg_ins_test.c
