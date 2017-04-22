@@ -1,5 +1,5 @@
-bin_PROGRAMS = fatcache stg_ins_test
-
+bin_PROGRAMS = fatcache libfc_test
+noinst_LIBRARIES = libfc.a
 AM_CPPFLAGS = -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS = -g
 AM_CFLAGS = -Wall
@@ -44,3 +44,19 @@ stg_ins_test_SOURCES =			\
 	fc_util.c fc_util.h		\
 	fc_queue.h			\
     stg_ins_test.c
+
+libfc_test_LDFLAGS= -lpthread -lrt
+libfc_test_LDADD=libfc.a
+libfc_test_SOURCES =			\
+    fc_test.c
+
+libfc_a_SOURCES =			\
+	fc_slab.c fc_slab.h		\
+	fc_item.c fc_item.h		\
+	fc_itemx.c fc_itemx.h		\
+	fc_time.c fc_time.h		\
+	fc_sha1.c fc_sha1.h		\
+	fc_log.c fc_log.h		\
+	fc_util.c fc_util.h		\
+	fc_queue.h			\
+	fc.h libfc.c		

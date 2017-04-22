@@ -30,6 +30,7 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 AM_PROG_CC_C_O
+AC_PROG_LIBTOOL
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_C_INLINE
