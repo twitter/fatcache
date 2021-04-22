@@ -1,7 +1,7 @@
 ## tl;dr
 
 - A single fatcache can do close to 100K set/sec for 100 bytes item sizes.
-- A single fatcache can do close to 4.5K get/sec for 100 byte item sizes.
+- A single fatcache can do close to 4.5K get/sec for 100 bytes item sizes.
 - All the 8 fatcache instances in aggregate do 32K get/sec to a single 600 GB SSD.
 - We can scale the read iops by having multiple SSD connected to a single machine.
 
