@@ -1,4 +1,9 @@
-# fatcache [![Build Status](https://travis-ci.org/twitter/fatcache.png?branch=master)](https://travis-ci.org/twitter/fatcache)
+# fatcache 
+
+[![status: retired](https://opensource.twitter.dev/status/retired.svg)](https://opensource.twitter.dev/status/#retired)
+[![Build Status](https://travis-ci.org/twitter/fatcache.png?branch=master)](https://travis-ci.org/twitter/fatcache)
+
+fatcache is no longer actively maintained.  See [twitter/pelikan](https://github.com/twitter/pelikan) for our latest caching work.
 
 **fatcache** is memcache on SSD. Think of fatcache as a cache for your big data.
 
