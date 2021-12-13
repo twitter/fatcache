@@ -1,6 +1,6 @@
 #ifndef _FC_SETTINGS_H_
 #define _FC_SETTINGS_H_
-struct settings {
+typedef struct settings {
     bool     daemonize;                    /* daemonize? */
 
     char     *log_filename;                /* log filename */
@@ -25,5 +25,5 @@ struct settings {
 
     uint32_t server_id;                    /* server id */
     uint32_t server_n;                     /* # server */
-};
+}settings_t;
 #endif //_FC_SETTINGS_H_
